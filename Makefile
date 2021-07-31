@@ -1,6 +1,8 @@
 #include .env
 
 #go section
+mod:
+	go mod init github.com/celsoRodrigues/dec
 tidy:
 	go mod tidy
 
@@ -20,7 +22,7 @@ run:
 install: build
 	cp ./bin/kubectl-enc /usr/local/bin
 
-all: tidy vendor build install run
+all: mod tidy vendor build install run
 
 uninstall:
 	rm /usr/local/bin/kubectl-enc
