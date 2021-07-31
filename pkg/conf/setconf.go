@@ -19,10 +19,12 @@ type ViperConfig interface {
 	GetString(key string) string
 	GetStringMapString(key string) map[string]string
 	ConfigFileUsed() string
+	IsSet(key string) bool
 }
 
 type viperConfig struct {
-	MyConf *viper.Viper
+	MyConf                  *viper.Viper
+	ConfigFileNotFoundError *viper.ConfigFileNotFoundError
 }
 
 func (c *viperConfig) SetConfigName(name string) {
@@ -72,6 +74,10 @@ func (c viperConfig) GetStringMapString(key string) map[string]string {
 }
 func (c viperConfig) ConfigFileUsed() string {
 	return c.MyConf.ConfigFileUsed()
+}
+
+func (c viperConfig) IsSet(key string) bool {
+	return c.MyConf.IsSet(key)
 }
 
 //NewConfigWithOpt created a new configuration asset
