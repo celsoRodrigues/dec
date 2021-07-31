@@ -19,7 +19,7 @@ build:
 run:
 	go run ./cmd/*.go
 
-install: build
+install: mod tidy build
 	cp ./bin/kubectl-enc /usr/local/bin
 
 all: mod tidy vendor build install run
