@@ -6,8 +6,6 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/celsoRodrigues/dec/pkg/cmd"
-
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 func main() {
@@ -15,7 +13,7 @@ func main() {
 	flags := pflag.NewFlagSet("kubectl-dec", pflag.ExitOnError)
 	pflag.CommandLine = flags
 
-	root := cmd.NewCmdDec(genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr})
+	root := cmd.NewCmdDec()
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}
