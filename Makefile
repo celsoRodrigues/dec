@@ -13,21 +13,21 @@ vendor:
 	go mod vendor -v
 
 build:
-	go build -o ./bin/kubectl-enc ./cmd
+	go build -o ./bin/kubectl-dec ./cmd
 	@echo "binary file in ./bin directory"
 
 run:
 	go run ./cmd/*.go
 
-install: mod tidy build
-	cp ./bin/kubectl-enc /usr/local/bin
+install: tidy build
+	cp ./bin/kubectl-dec /usr/local/bin
 
 all: mod tidy vendor build install run
 
 uninstall:
-	rm /usr/local/bin/kubectl-enc
+	rm -rf /usr/local/bin/kubectl-dec
 
 clean: uninstall
-	rm ./bin/kubectl-enc
+	rm ./bin/kubectl-dec
 	rm go.mod go.sum
 	rm ./vendor -rf

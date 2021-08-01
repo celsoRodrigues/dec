@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/celsoRodrigues/dec/pkg/conf"
 	"github.com/manifoldco/promptui"
@@ -16,10 +18,11 @@ import (
 //of genericclioptions to have access to native kubecl flags
 
 type DecOptions struct {
-	dir    string   //directory where secrets live
-	file   string   //file to decrypt
-	args   []string //arguments passed to cmdline
-	config conf.ViperConfig
+	dir        string           //directory where secrets live
+	file       string           //file to decrypt
+	passphrase string           //key passphrase
+	args       []string         //arguments passed to cmdline
+	config     conf.ViperConfig //config object
 }
 
 // NewDecOptions provides an instance of DecOptions with default values
@@ -62,21 +65,22 @@ func NewCmdDec(config conf.ViperConfig) *cobra.Command {
 // Run is the principal function that drives this plugin
 func (o *DecOptions) Run() error {
 
+	//getting the cluster environment
+	path, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+	pathSlice := strings.Split(path, "/")
+	clusterEnv := strings.ReplaceAll(pathSlice[len(pathSlice)-3], "-", "_")
+	fmt.Println(clusterEnv)
+
+	//get the passphrase assuming the environment variable containing the phrase is GPG_PASSPHRASE_ENV for example GPG_PASSPHRASE_DEV-EUW2
+	//phrase := os.Getenv(fmt.Sprintf("PHRASE-%s", strings.ToUpper(clusterEnv)))
+
+	//check if file not passed as the first argument, if so, use the first arg as the file to decrypt
 	if len(o.args) < 1 {
 
-		var files []string
-		f, err := o.readSecretsDir(o.dir)
-		if err != nil {
-			return err
-
-		}
-
-		for _, x := range f {
-			files = append(files, x.Name())
-
-		}
-
-		o.prompt(files)
+		o.showPrompt()
 
 	} else {
 		fmt.Printf("You choose %q\n", os.Args[1])
@@ -119,5 +123,22 @@ func (o *DecOptions) prompt(files []string) error {
 
 	fmt.Printf("You choose %q\n", o.file)
 
+	return nil
+}
+
+func (o *DecOptions) showPrompt() error {
+	var files []string
+	f, err := o.readSecretsDir(o.dir)
+	if err != nil {
+		return err
+
+	}
+
+	for _, x := range f {
+		files = append(files, x.Name())
+
+	}
+
+	o.prompt(files)
 	return nil
 }
