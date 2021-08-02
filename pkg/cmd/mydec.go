@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/celsoRodrigues/dec/pkg/conf"
+	"github.com/celsoRodrigues/dec/pkg/mycrypt"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
@@ -65,25 +66,72 @@ func NewCmdDec(config conf.ViperConfig) *cobra.Command {
 // Run is the principal function that drives this plugin
 func (o *DecOptions) Run() error {
 
-	//getting the cluster environment
+	//getting the cluster environment from the working directory path
 	path, err := os.Getwd()
 	if err != nil {
 		log.Println(err)
+		os.Exit(1)
 	}
 	pathSlice := strings.Split(path, "/")
-	clusterEnv := strings.ReplaceAll(pathSlice[len(pathSlice)-3], "-", "_")
+	clusterEnv := strings.ToUpper(strings.ReplaceAll(pathSlice[len(pathSlice)-3], "-", "_"))
 	fmt.Println(clusterEnv)
 
-	//get the passphrase assuming the environment variable containing the phrase is GPG_PASSPHRASE_ENV for example GPG_PASSPHRASE_DEV-EUW2
-	//phrase := os.Getenv(fmt.Sprintf("PHRASE-%s", strings.ToUpper(clusterEnv)))
+	//get the passphrase assuming the environment variable containing the phrase is GPG_PASSPHRASE_ENV
+	//for example GPG_PASSPHRASE_DEV_EUW2
+	envName := fmt.Sprintf("GPG_PASSPHRASE_%s", clusterEnv)
+	phrase := os.Getenv(envName)
+	if len(phrase) < 1 {
+		fmt.Printf("environment variable %s is not set ", envName)
+		os.Exit(1)
+	}
+	o.passphrase = phrase
 
 	//check if file not passed as the first argument, if so, use the first arg as the file to decrypt
 	if len(o.args) < 1 {
 
 		o.showPrompt()
 
+		p := filepath.Join(o.dir, o.file)
+		fmt.Println(p)
+
+		f, err := os.Open(filepath.Join(o.dir, o.file))
+		if err != nil {
+			log.Fatal(err)
+		}
+		secbyte, err := ioutil.ReadAll(f)
+		if err != nil {
+			log.Fatal("asdasd", err)
+		}
+		fmt.Println("the file is", string(secbyte))
+
+		mcrypt := mycrypt.NewEncWithOptins("/home/celso/", o.passphrase, "/home/celso/.gnupg/secring.gpg", "/home/celso/.gnupg/pubring.gpg")
+		res, err := mcrypt.Dec(string(secbyte))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println("result:", string(res))
+
 	} else {
-		fmt.Printf("You choose %q\n", os.Args[1])
+		o.file = os.Args[1]
+		fmt.Printf("You choose %q\n", o.file)
+
+		f, err := os.Open(filepath.Join(o.dir, o.file))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		secbyte, err := ioutil.ReadAll(f)
+		if err != nil {
+			log.Fatal("asdasd", err)
+		}
+		mcrypt := mycrypt.NewEncWithOptins("/home/celso/", o.passphrase, "/home/celso/.gnupg/secring.gpg", "/home/celso/.gnupg/pubring.gpg")
+		res, err := mcrypt.Dec(string(secbyte))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println("result:", string(res))
 	}
 
 	return nil
